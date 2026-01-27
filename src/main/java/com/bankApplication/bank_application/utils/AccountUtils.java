@@ -4,7 +4,13 @@ import java.time.Year;
 
 public class AccountUtils {
 
+    public static final String ACCOUNT_EXISTS_CODE = "001";
 
+    public static final String ACCOUNT_EXISTS_MESSAGE = "This user is already has an account";
+
+    public static final String ACCOUNT_CREATION_SUCCESS = "002";
+
+    public static final String ACCOUNT_CREATION_MESSAGE = "Account has been SuccessFully Created!";
 
     public static String generateAccountNumber(){
         /*
@@ -27,6 +33,6 @@ public class AccountUtils {
 
         StringBuilder accountNumber = new StringBuilder();
 
-        return accountNumber.append(year).append(randNumber).toString();
+        return accountNumber.append(year).append(randomNumber).toString();
     }
 }
