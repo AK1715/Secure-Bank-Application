@@ -2,11 +2,11 @@ package com.bankApplication.bank_application.service.impl;
 
 import com.bankApplication.bank_application.dto.AccountInfo;
 import com.bankApplication.bank_application.dto.BankResponse;
+import com.bankApplication.bank_application.dto.EmailDetails;
 import com.bankApplication.bank_application.dto.UserRequest;
 import com.bankApplication.bank_application.entity.User;
 import com.bankApplication.bank_application.repository.UserRepository;
 import com.bankApplication.bank_application.utils.AccountUtils;
-import lombok.AllArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -18,6 +18,9 @@ public class UserServiceImpl implements UserService{
     @Autowired
     UserRepository userRepository;
 
+    @Autowired
+    EmailService emailService;
+
     @Override
     public BankResponse createAccount(UserRequest userRequest){
         /*
@@ -26,6 +29,7 @@ public class UserServiceImpl implements UserService{
         */
 
         if(userRepository.existsByEmail(userRequest.getEmail())){
+            System.out.println("User Already Exists");
             return BankResponse.builder()
                     .responseCode(AccountUtils.ACCOUNT_EXISTS_CODE)
                     .responseMessage(AccountUtils.ACCOUNT_EXISTS_MESSAGE)
@@ -49,6 +53,15 @@ public class UserServiceImpl implements UserService{
                 .build();
 
         User savedUser = userRepository.save(newUser);
+
+        //Send email Alert
+        EmailDetails emailDetails = EmailDetails.builder()
+                .recipient(savedUser.getEmail())
+                .subject("Your Bank Account was created successfully")
+                .messageBody("Congratulations! Your Account Has Been Successfully Created..! \nYour Account Details: \n" +
+                        "Account Name:" + savedUser.getFirstName() + " " + savedUser.getLastName() + "\nAccount Number: " + savedUser.getAccountNumber() + "\nPhone Number: " + savedUser.getPhoneNumber())
+                .build();
+        emailService.sendEmailAlert(emailDetails);
 
         return BankResponse.builder()
                 .responseCode(AccountUtils.ACCOUNT_CREATION_SUCCESS)
