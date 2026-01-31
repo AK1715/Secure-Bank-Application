@@ -12,6 +12,20 @@ public class AccountUtils {
 
     public static final String ACCOUNT_CREATION_MESSAGE = "Account has been SuccessFully Created!";
 
+    public static final String ACCOUNT_NOT_EXIST_CODE = "003";
+
+    public static final String ACCOUNT_NOT_EXIST_MESSAGE = "User with the provided Account Number does not exist";
+
+    public static final String ACCOUNT_FOUND_CODE = "004";
+
+    public static final String ACCOUNT_FOUND_MESSAGE = "User Account Found";
+
+    public static final String ACCOUNT_CREDIT_CODE = "005";
+
+    public static final String ACCOUNT_CREDIT_MESSAGE = "User Account Credited";
+
+
+
     public static String generateAccountNumber(){
         /*
          * 2026 + randomSixDigits
