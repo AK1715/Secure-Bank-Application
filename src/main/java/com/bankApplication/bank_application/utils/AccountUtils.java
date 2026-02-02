@@ -22,7 +22,23 @@ public class AccountUtils {
 
     public static final String ACCOUNT_CREDIT_CODE = "005";
 
-    public static final String ACCOUNT_CREDIT_MESSAGE = "User Account Credited";
+    public static final String ACCOUNT_CREDIT_MESSAGE = "User Account Credited SuccessFully";
+
+    public static final String INSUFFICIENT_BALANCE_CODE = "006";
+
+    public static final String INSUFFICIENT_BALANCE_MESSAGE = "Insufficient Balance";
+
+    public static final String ACCOUNT_DEBIT_CODE = "007";
+
+    public static final String ACCOUNT_DEBIT_MESSAGE = "User Account Debited SuccessFully";
+
+    public static final String TRANSFER_SUCCESSFUL_CODE = "008";
+
+    public static final String TRANSFER_SUCCESSFUL_MESSAGE = "Transfer SuccessFul";
+
+
+
+
 
 
 
