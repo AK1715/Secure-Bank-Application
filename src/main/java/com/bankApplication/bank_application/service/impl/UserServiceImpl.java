@@ -5,9 +5,11 @@ import com.bankApplication.bank_application.entity.User;
 import com.bankApplication.bank_application.repository.UserRepository;
 import com.bankApplication.bank_application.utils.AccountUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import java.math.BigInteger;
 
 @Service
 public class UserServiceImpl implements UserService{
@@ -120,6 +122,7 @@ public class UserServiceImpl implements UserService{
         // checking if the account exits
         boolean isAccountExist = userRepository.existsByAccountNumber(request.getAccountNumber());
         if(!isAccountExist){
+            System.out.println("User Not Found to Credit a amount");
             return BankResponse.builder()
                     .responseCode(AccountUtils.ACCOUNT_NOT_EXIST_CODE)
                     .responseMessage(AccountUtils.ACCOUNT_NOT_EXIST_MESSAGE)
@@ -130,6 +133,7 @@ public class UserServiceImpl implements UserService{
         User userToCredit = userRepository.findByAccountNumber(request.getAccountNumber());
         userToCredit.setAccountBalance(userToCredit.getAccountBalance().add(request.getAmount()));
         userRepository.save(userToCredit);
+        System.out.println("+" + request.getAmount() + " Money added Successfully and also updated in database");
 
         return BankResponse.builder()
                 .responseCode(AccountUtils.ACCOUNT_CREDIT_CODE)
@@ -140,6 +144,103 @@ public class UserServiceImpl implements UserService{
                         .accountBalance(userToCredit.getAccountBalance())
                         .build())
                 .build();
+    }
+
+    @Override
+    public BankResponse debitAccount(CreditDebitRequest request){
+        // checking if the account exits
+        boolean isAccountExist = userRepository.existsByAccountNumber(request.getAccountNumber());
+        if(!isAccountExist){
+            System.out.println("User Not Found to Credit a amount");
+            return BankResponse.builder()
+                    .responseCode(AccountUtils.ACCOUNT_NOT_EXIST_CODE)
+                    .responseMessage(AccountUtils.ACCOUNT_NOT_EXIST_MESSAGE)
+                    .accountInfo(null)
+                    .build();
+        }
+
+        User userToDebit = userRepository.findByAccountNumber(request.getAccountNumber());
+        BigInteger availableBalance = userToDebit.getAccountBalance().toBigInteger();
+        BigInteger debitAmount = request.getAmount().toBigInteger();
+        if(availableBalance.intValue() < debitAmount.intValue()){
+
+            return BankResponse.builder()
+                    .responseCode(AccountUtils.INSUFFICIENT_BALANCE_CODE)
+                    .responseMessage(AccountUtils.INSUFFICIENT_BALANCE_MESSAGE)
+                    .accountInfo(null)
+                    .build();
+        }
+        else{
+            userToDebit.setAccountBalance(userToDebit.getAccountBalance().subtract(request.getAmount()));
+            userRepository.save(userToDebit);
+
+            System.out.println("-" + request.getAmount() + " Amount debited successFully also updated in database");
+
+            return BankResponse.builder()
+                    .responseCode(AccountUtils.ACCOUNT_DEBIT_CODE)
+                    .responseMessage(AccountUtils.ACCOUNT_DEBIT_MESSAGE)
+                    .accountInfo(AccountInfo.builder()
+                            .accountName(userToDebit.getFirstName() + " " + userToDebit.getLastName())
+                            .accountNumber(request.getAccountNumber())
+                            .accountBalance(userToDebit.getAccountBalance())
+                            .build())
+                    .build();
+        }
+
+    }
+
+    @Override
+    public BankResponse transfer(TransferRequest request){
+        // get the account to debit
+        //check if the amount i'm debiting is not more then current balance
+        //debit the account
+        //get the account credit
+        //credit the account
+        boolean isDestinationAccountExist = userRepository.existsByAccountNumber(request.getDestinationAccountNumber());
+        if(!isDestinationAccountExist){
+            return BankResponse.builder()
+                    .responseCode(AccountUtils.ACCOUNT_NOT_EXIST_CODE)
+                    .responseMessage(AccountUtils.ACCOUNT_NOT_EXIST_MESSAGE)
+                    .accountInfo(null)
+                    .build();
+        }
+
+        User sourceAccountUser = userRepository.findByAccountNumber(request.getSourceAccountNumber());
+        if(request.getAmount().compareTo(sourceAccountUser.getAccountBalance()) > 0){
+            return BankResponse.builder()
+                    .responseCode(AccountUtils.INSUFFICIENT_BALANCE_CODE)
+                    .responseMessage(AccountUtils.INSUFFICIENT_BALANCE_MESSAGE)
+                    .accountInfo(null)
+                    .build();
+        }
+
+        sourceAccountUser.setAccountBalance(sourceAccountUser.getAccountBalance().subtract(request.getAmount()));
+        String sourceUsername = sourceAccountUser.getFirstName() + " " + sourceAccountUser.getLastName();
+        userRepository.save(sourceAccountUser);
+        EmailDetails debitAlert = EmailDetails.builder()
+                .subject("Debit Alert")
+                .recipient(sourceAccountUser.getEmail())
+                .messageBody("Your Account have debited -₹" + request.getAmount() + " has been deducted from your account! Your current balance is ₹" + sourceAccountUser.getAccountBalance())
+                .build();
+        emailService.sendEmailAlert(debitAlert);
+
+        User destinationAccountUser = userRepository.findByAccountNumber(request.getDestinationAccountNumber());
+        destinationAccountUser.setAccountBalance(destinationAccountUser.getAccountBalance().add(request.getAmount()));
+//        String recipientUsername = destinationAccountUser.getFirstName() + " " + destinationAccountUser.getLastName();
+        userRepository.save(destinationAccountUser);
+        EmailDetails creditAlert = EmailDetails.builder()
+                .subject("Credit Alert")
+                .recipient(destinationAccountUser.getEmail())
+                .messageBody("You have been credited +₹" + request.getAmount() + " has been sent to your account from "+ sourceUsername + " Your Current balance is ₹" + destinationAccountUser.getAccountBalance())
+                .build();
+        emailService.sendEmailAlert(creditAlert);
+
+        return BankResponse.builder()
+                .responseCode(AccountUtils.TRANSFER_SUCCESSFUL_CODE)
+                .responseMessage(AccountUtils.TRANSFER_SUCCESSFUL_MESSAGE)
+                .accountInfo(null)
+                .build();
+
     }
 
 
