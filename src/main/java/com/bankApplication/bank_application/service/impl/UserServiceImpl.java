@@ -20,6 +20,9 @@ public class UserServiceImpl implements UserService{
     @Autowired
     EmailService emailService;
 
+    @Autowired
+    TransactionService transactionService;
+
     @Override
     public BankResponse createAccount(UserRequest userRequest){
         /*
@@ -135,6 +138,15 @@ public class UserServiceImpl implements UserService{
         userRepository.save(userToCredit);
         System.out.println("+" + request.getAmount() + " Money added Successfully and also updated in database");
 
+        //Saved Transaction to the db
+        TransactionDto transactionDto = TransactionDto.builder()
+                .accountNumber(userToCredit.getAccountNumber())
+                .transactionType("CREDIT")
+                .amount(request.getAmount())
+                .build();
+
+        transactionService.savedTransaction(transactionDto);
+
         return BankResponse.builder()
                 .responseCode(AccountUtils.ACCOUNT_CREDIT_CODE)
                 .responseMessage(AccountUtils.ACCOUNT_CREDIT_MESSAGE)
@@ -172,7 +184,17 @@ public class UserServiceImpl implements UserService{
         }
         else{
             userToDebit.setAccountBalance(userToDebit.getAccountBalance().subtract(request.getAmount()));
+            //save debit amount into db
             userRepository.save(userToDebit);
+
+            //Saved Transaction to the db
+            TransactionDto transactionDto = TransactionDto.builder()
+                    .accountNumber(userToDebit.getAccountNumber())
+                    .transactionType("DEBIT")
+                    .amount(request.getAmount())
+                    .build();
+
+            transactionService.savedTransaction(transactionDto);
 
             System.out.println("-" + request.getAmount() + " Amount debited successFully also updated in database");
 
@@ -196,6 +218,8 @@ public class UserServiceImpl implements UserService{
         //debit the account
         //get the account credit
         //credit the account
+
+        //check the account exist or not for the credit account
         boolean isDestinationAccountExist = userRepository.existsByAccountNumber(request.getDestinationAccountNumber());
         if(!isDestinationAccountExist){
             return BankResponse.builder()
@@ -205,6 +229,7 @@ public class UserServiceImpl implements UserService{
                     .build();
         }
 
+        //check the balance of the debited account
         User sourceAccountUser = userRepository.findByAccountNumber(request.getSourceAccountNumber());
         if(request.getAmount().compareTo(sourceAccountUser.getAccountBalance()) > 0){
             return BankResponse.builder()
@@ -214,6 +239,7 @@ public class UserServiceImpl implements UserService{
                     .build();
         }
 
+        //Send Mail to the debited account
         sourceAccountUser.setAccountBalance(sourceAccountUser.getAccountBalance().subtract(request.getAmount()));
         String sourceUsername = sourceAccountUser.getFirstName() + " " + sourceAccountUser.getLastName();
         userRepository.save(sourceAccountUser);
@@ -223,7 +249,16 @@ public class UserServiceImpl implements UserService{
                 .messageBody("Your Account have debited -₹" + request.getAmount() + " has been deducted from your account! Your current balance is ₹" + sourceAccountUser.getAccountBalance())
                 .build();
         emailService.sendEmailAlert(debitAlert);
+        //Saved Transaction to the db
+//        TransactionDto transactionDtoDebit = TransactionDto.builder()
+//                .accountNumber(sourceAccountUser.getAccountNumber())
+//                .transactionType("DEBIT")
+//                .amount(request.getAmount())
+//                .build();
+//        transactionService.savedTransaction(transactionDtoDebit);
 
+
+        //Send Mail to the credited account
         User destinationAccountUser = userRepository.findByAccountNumber(request.getDestinationAccountNumber());
         destinationAccountUser.setAccountBalance(destinationAccountUser.getAccountBalance().add(request.getAmount()));
 //        String recipientUsername = destinationAccountUser.getFirstName() + " " + destinationAccountUser.getLastName();
@@ -235,6 +270,15 @@ public class UserServiceImpl implements UserService{
                 .build();
         emailService.sendEmailAlert(creditAlert);
 
+        //Saved Transaction to the db
+        TransactionDto transactionDtoCredit = TransactionDto.builder()
+                .accountNumber(destinationAccountUser.getAccountNumber())
+                .transactionType("CREDIT")
+                .amount(request.getAmount())
+                .build();
+
+        transactionService.savedTransaction(transactionDtoCredit);
+
         return BankResponse.builder()
                 .responseCode(AccountUtils.TRANSFER_SUCCESSFUL_CODE)
                 .responseMessage(AccountUtils.TRANSFER_SUCCESSFUL_MESSAGE)
@@ -242,6 +286,9 @@ public class UserServiceImpl implements UserService{
                 .build();
 
     }
+
+
+
 
 
 }
