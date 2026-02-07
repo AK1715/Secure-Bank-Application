@@ -1,6 +1,7 @@
 package com.bankApplication.bank_application.service.impl;
 
 
+import com.bankApplication.bank_application.dto.EmailDetails;
 import com.bankApplication.bank_application.entity.Transaction;
 import com.bankApplication.bank_application.entity.User;
 import com.bankApplication.bank_application.repository.TransactionRepository;
@@ -36,6 +37,8 @@ public class BankStatement {
 
     private TransactionRepository transactionRepository;
 
+    private EmailService emailService;
+
     private UserRepository userRepository;
 
     private static final String FILE = "E:\\akshay\\Tools\\MyStatement.pdf";
@@ -64,7 +67,7 @@ public class BankStatement {
         PdfPTable bankInfoTable = new PdfPTable(1);
         PdfPCell bankName = new PdfPCell(new Phrase("AK Bank App"));
         bankName.setBorder(0);
-        bankName.setBackgroundColor(BaseColor.BLUE);
+        bankName.setBackgroundColor(BaseColor.GRAY);
         bankName.setPadding(20f);
 
         PdfPCell bankAddress = new PdfPCell(new Phrase("Gali number 402"));
@@ -87,16 +90,16 @@ public class BankStatement {
 
         PdfPTable transactionTable = new PdfPTable(4);
         PdfPCell date = new PdfPCell(new Phrase("DATE"));
-        date.setBackgroundColor(BaseColor.BLUE);
+        date.setBackgroundColor(BaseColor.GRAY);
         date.setBorder(0);
         PdfPCell transactionType = new PdfPCell(new Phrase("TRANSACTION TYPE"));
-        transactionType.setBackgroundColor(BaseColor.BLUE);
+        transactionType.setBackgroundColor(BaseColor.GRAY);
         transactionType.setBorder(0);
         PdfPCell transactionAmount = new PdfPCell(new Phrase("TRANSACTION AMOUNT"));
-        transactionAmount.setBackgroundColor(BaseColor.BLUE);
+        transactionAmount.setBackgroundColor(BaseColor.GRAY);
         transactionAmount.setBorder(0);
         PdfPCell status = new PdfPCell(new Phrase("STATUS"));
-        status.setBackgroundColor(BaseColor.BLUE);
+        status.setBackgroundColor(BaseColor.GRAY);
         status.setBorder(0);
 
         transactionTable.addCell(date);
@@ -123,6 +126,15 @@ public class BankStatement {
         document.add(transactionTable);
 
         document.close();
+
+        EmailDetails emailDetails = EmailDetails.builder()
+                .recipient(user.getEmail())
+                .subject("STATEMENT OF ACCOUNT")
+                .messageBody("Kindly find your requested account statement attached!")
+                .attachment(FILE)
+                .build();
+
+        emailService.sendEmailWithAttachment(emailDetails);
 
 
         return transactionList;
