@@ -1,6 +1,7 @@
 package com.bankApplication.bank_application.dto;
 
 
+import com.bankApplication.bank_application.entity.Role;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -18,6 +19,8 @@ public class UserRequest {
     private String address;
     private String stateOfOrigin;
     private String email;
+    private String password;
     private String phoneNumber;
     private String alternativeNumber;
+    private Role role;
 }
