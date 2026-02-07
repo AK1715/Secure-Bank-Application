@@ -15,7 +15,7 @@ import java.time.LocalDateTime;
 @Builder
 @Entity
 @Table(name = "users")
-public class User {
+public class User  {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -29,13 +29,16 @@ public class User {
     private String accountNumber;
     private BigDecimal accountBalance;
     private String email;
+    private String password;
     private String phoneNumber;
     private String alternativeNumber;
     private String status;
+    private Role role;
 
     @CreationTimestamp
     private LocalDateTime createAt;
 
     @UpdateTimestamp
     private LocalDateTime modifiedAt;
+
 }
